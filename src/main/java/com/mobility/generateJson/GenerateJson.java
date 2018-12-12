@@ -102,24 +102,28 @@ public class GenerateJson {
 		}
 
 		if (config.isSortieWs()) {
-			URL url = new URL(config.getUrlWs());
-			HttpURLConnection conn = (HttpURLConnection) url.openConnection();
-			conn.setDoOutput(true);
-			conn.setRequestMethod("POST");
-			conn.setRequestProperty("Content-Type", "application/json");
-			OutputStream os = conn.getOutputStream();
-			os.write(json.getBytes());
-			os.flush();
-			if (conn.getResponseCode() != HttpURLConnection.HTTP_OK) {
-				throw new RuntimeException("Failed : HTTP error code : " + conn.getResponseCode());
+			try {
+				URL url = new URL(config.getUrlWs());
+				HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+				conn.setDoOutput(true);
+				conn.setRequestMethod("POST");
+				conn.setRequestProperty("Content-Type", "application/json");
+				OutputStream os = conn.getOutputStream();
+				os.write(json.getBytes());
+				os.flush();
+				if (conn.getResponseCode() != HttpURLConnection.HTTP_OK) {
+					System.err.println("Failed : HTTP error code : " + conn.getResponseCode());
+				}
+				BufferedReader br = new BufferedReader(new InputStreamReader((conn.getInputStream())));
+				String output;
+				System.out.println("Output from Server .... \n");
+				while ((output = br.readLine()) != null) {
+					System.out.println(output);
+				}
+				conn.disconnect();
+			} catch (Exception e) {
+				System.err.println("Erreur dans l'envoi des données : " + e);
 			}
-			BufferedReader br = new BufferedReader(new InputStreamReader((conn.getInputStream())));
-			String output;
-			System.out.println("Output from Server .... \n");
-			while ((output = br.readLine()) != null) {
-				System.out.println(output);
-			}
-			conn.disconnect();
 		}
 	}
 
