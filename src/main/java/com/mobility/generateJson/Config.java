@@ -24,7 +24,10 @@ public class Config {
 
 	private boolean sortieConsole;
 	private boolean sortieWs;
-	private String urlWs;
+	private String urlWsData;
+	private String urlWsHisto;
+
+	private int profondeurHisto;
 
 	public Config(String fichierProperties) throws IOException, ParseException {
 		Properties properties = new Properties();
@@ -55,7 +58,11 @@ public class Config {
 		// Sorties
 		this.sortieConsole = "1".equals(properties.getProperty("sortie.console"));
 		this.sortieWs = "1".equals(properties.getProperty("sortie.ws"));
-		this.urlWs = properties.getProperty("sortie.ws.url");
+		this.urlWsData = properties.getProperty("sortie.ws.url.data");
+		this.urlWsHisto = properties.getProperty("sortie.ws.url.histo");
+
+		// Histo
+		this.profondeurHisto = Integer.parseInt(properties.getProperty("histo.profondeur"));
 	}
 
 	public String getUserBd() {
@@ -102,8 +109,16 @@ public class Config {
 		return sortieWs;
 	}
 
-	public String getUrlWs() {
-		return urlWs;
+	public String getUrlWsData() {
+		return urlWsData;
+	}
+
+	public String getUrlWsHisto() {
+		return urlWsHisto;
+	}
+
+	public int getProfondeurHisto() {
+		return profondeurHisto;
 	}
 
 }

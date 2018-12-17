@@ -51,4 +51,17 @@ public class Mesure {
 		qualif = 2;
 		valeur = -1;
 	}
+
+	public Mesure clone() {
+		Mesure clone = new Mesure();
+
+		clone.setId(id);
+		clone.setLocalisationId(localisationId);
+		clone.setQualif(qualif);
+		clone.setValeur(valeur);
+		clone.setType(type);
+		clone.setId(id);
+
+		return clone;
+	}
 }

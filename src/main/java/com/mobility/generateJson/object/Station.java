@@ -27,4 +27,13 @@ public class Station {
 		this.mesures = mesures;
 	}
 
+	public Station clone() {
+		Station clone = new Station();
+		clone.setId(id);
+		for (Mesure mesure : mesures) {
+			Mesure cloneMesure = mesure.clone();
+			clone.getMesures().add(cloneMesure);
+		}
+		return clone;
+	}
 }

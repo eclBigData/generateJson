@@ -14,11 +14,11 @@ import java.sql.Statement;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Date;
-import java.util.Hashtable;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectWriter;
 import com.mobility.generateJson.object.DataPublication;
+import com.mobility.generateJson.object.HistoriquePublication;
 import com.mobility.generateJson.object.Mesure;
 import com.mobility.generateJson.object.Station;
 
@@ -29,8 +29,7 @@ public class GenerateJson {
 	private Connection connection = null;
 
 	private DataPublication publication = new DataPublication();
-
-	private Hashtable<Integer, Mesure> hashMesures = new Hashtable<Integer, Mesure>();
+	private HistoriquePublication historiquePublication = new HistoriquePublication();
 
 	private static SimpleDateFormat df = new SimpleDateFormat("dd-MM-yyyy HH:mm:ss");
 
@@ -52,7 +51,7 @@ public class GenerateJson {
 			mesure.setLocalisationId(rs.getInt("localisation_id"));
 			mesure.setType(rs.getInt("typemesure_id"));
 			Integer stationId = rs.getInt("station_id");
-			hashMesures.put(mesure.getId(), mesure);
+			publication.getHashMesures().put(mesure.getId(), mesure);
 
 			Station station = null;
 			if (publication.getTableStations().containsKey(stationId)) {
@@ -68,23 +67,17 @@ public class GenerateJson {
 		stmt.close();
 	}
 
-	private void razMesures() {
-		for (Mesure m : hashMesures.values()) {
-			m.raz();
-		}
-	}
-
-	private void majMesures(Date datemaj) throws SQLException {
-		publication.setDate(df.format(datemaj));
-		razMesures();
+	private void majMesures(Date datemaj, DataPublication publicationToMaj) throws SQLException {
+		publicationToMaj.setDate(df.format(datemaj));
+		publicationToMaj.razMesures();
 
 		// Récupération des mesures actuelles
 		Statement stmt = connection.createStatement();
 		ResultSet rs = stmt.executeQuery("select * " + config.getQueryData().replaceAll("#date#", df.format(datemaj)));
 		while (rs.next()) {
 			Integer idMesure = rs.getInt("mesure_mesure_id");
-			if (hashMesures.containsKey(idMesure)) {
-				Mesure mesure = hashMesures.get(idMesure);
+			if (publicationToMaj.getHashMesures().containsKey(idMesure)) {
+				Mesure mesure = publicationToMaj.getHashMesures().get(idMesure);
 				mesure.setQualif(rs.getInt("qualif"));
 				mesure.setValeur(rs.getInt("valeur"));
 			}
@@ -93,9 +86,9 @@ public class GenerateJson {
 		stmt.close();
 	}
 
-	private void genereJson() throws IOException {
+	private void genereJson(DataPublication publicationToMaj) throws IOException {
 		ObjectWriter ow = new ObjectMapper().writer();
-		String json = ow.writeValueAsString(publication);
+		String json = ow.writeValueAsString(publicationToMaj);
 
 		if (config.isSortieConsole()) {
 			System.out.println(json);
@@ -103,7 +96,53 @@ public class GenerateJson {
 
 		if (config.isSortieWs()) {
 			try {
-				URL url = new URL(config.getUrlWs());
+				URL url = new URL(config.getUrlWsData());
+				HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+				conn.setDoOutput(true);
+				conn.setRequestMethod("POST");
+				conn.setRequestProperty("Content-Type", "application/json");
+				OutputStream os = conn.getOutputStream();
+				os.write(json.getBytes());
+				os.flush();
+				if (conn.getResponseCode() != HttpURLConnection.HTTP_OK) {
+					System.err.println("Failed : HTTP error code : " + conn.getResponseCode());
+				}
+				BufferedReader br = new BufferedReader(new InputStreamReader((conn.getInputStream())));
+				String output;
+				System.out.println("Output from Server .... \n");
+				while ((output = br.readLine()) != null) {
+					System.out.println(output);
+				}
+				conn.disconnect();
+			} catch (Exception e) {
+				System.err.println("Erreur dans l'envoi des données : " + e);
+			}
+		}
+	}
+
+	private void genereHistorique() throws SQLException, IOException {
+		Calendar c = Calendar.getInstance();
+		for (int i = config.getProfondeurHisto(); i > 0; i--) {
+			c.setTime(config.getDateDebut());
+			c.add(Calendar.MINUTE, -1 * i * config.getCyclePasEnMinutes());
+			DataPublication publicationHisto = publication.clone();
+			majMesures(c.getTime(), publicationHisto);
+			historiquePublication.getListePublications().add(publicationHisto);
+		}
+		genereJsonHistorique();
+	}
+
+	private void genereJsonHistorique() throws IOException {
+		ObjectWriter ow = new ObjectMapper().writer();
+		String json = ow.writeValueAsString(historiquePublication);
+
+		if (config.isSortieConsole()) {
+			System.out.println(json);
+		}
+
+		if (config.isSortieWs()) {
+			try {
+				URL url = new URL(config.getUrlWsHisto());
 				HttpURLConnection conn = (HttpURLConnection) url.openConnection();
 				conn.setDoOutput(true);
 				conn.setRequestMethod("POST");
@@ -131,8 +170,8 @@ public class GenerateJson {
 		Date date = config.getDateDebut();
 
 		for (;;) {
-			generateJson.majMesures(date);
-			generateJson.genereJson();
+			generateJson.majMesures(date, publication);
+			generateJson.genereJson(publication);
 			Calendar c = Calendar.getInstance();
 			c.setTime(date);
 			c.add(Calendar.MINUTE, config.getCyclePasEnMinutes());
@@ -152,6 +191,7 @@ public class GenerateJson {
 		generateJson = new GenerateJson();
 		try {
 			generateJson.init();
+			generateJson.genereHistorique();
 			generateJson.run();
 			generateJson.end();
 		} catch (Exception e) {

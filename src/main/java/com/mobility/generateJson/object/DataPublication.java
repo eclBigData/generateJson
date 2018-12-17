@@ -11,9 +11,11 @@ public class DataPublication {
 	@JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "dd-MM-yyyy hh:mm:ss")
 	private String date;
 	private Hashtable<Integer, Station> stations;
+	private Hashtable<Integer, Mesure> hashMesures;
 
 	public DataPublication() {
 		stations = new Hashtable<Integer, Station>();
+		hashMesures = new Hashtable<Integer, Mesure>();
 	}
 
 	public String getDate() {
@@ -33,4 +35,24 @@ public class DataPublication {
 		return stations;
 	}
 
+	@Transient
+	public Hashtable<Integer, Mesure> getHashMesures() {
+		return hashMesures;
+	}
+
+	public void razMesures() {
+		for (Mesure m : hashMesures.values()) {
+			m.raz();
+		}
+	}
+
+	public DataPublication clone() {
+		DataPublication clone = new DataPublication();
+		clone.setDate(date);
+		for (Integer key : stations.keySet()) {
+			Station cloneStation = stations.get(key).clone();
+			clone.getTableStations().put(key, cloneStation);
+		}
+		return clone;
+	}
 }
