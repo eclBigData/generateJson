@@ -52,6 +52,9 @@ public class DataPublication {
 		for (Integer key : stations.keySet()) {
 			Station cloneStation = stations.get(key).clone();
 			clone.getTableStations().put(key, cloneStation);
+			for (Mesure mes : cloneStation.getMesures()) {
+				clone.getHashMesures().put(mes.getId(), mes);
+			}
 		}
 		return clone;
 	}
