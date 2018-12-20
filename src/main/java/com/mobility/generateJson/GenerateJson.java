@@ -20,6 +20,9 @@ import com.fasterxml.jackson.databind.ObjectWriter;
 import com.mobility.generateJson.object.DataPublication;
 import com.mobility.generateJson.object.HistoriquePublication;
 import com.mobility.generateJson.object.Mesure;
+import com.mobility.generateJson.object.Prediction;
+import com.mobility.generateJson.object.PredictionResultat;
+import com.mobility.generateJson.object.PredictionStation;
 import com.mobility.generateJson.object.Station;
 
 public class GenerateJson {
@@ -107,11 +110,37 @@ public class GenerateJson {
 				if (conn.getResponseCode() != HttpURLConnection.HTTP_OK) {
 					System.err.println("Failed : HTTP error code : " + conn.getResponseCode());
 				}
-				BufferedReader br = new BufferedReader(new InputStreamReader((conn.getInputStream())));
-				String output;
-				System.out.println("Output from Server .... \n");
-				while ((output = br.readLine()) != null) {
-					System.out.println(output);
+				StringBuilder result = new StringBuilder("");
+				try {
+					Prediction prediction = new ObjectMapper().readValue(conn.getInputStream(), Prediction.class);
+
+					for (PredictionStation station : prediction.getStations()) {
+						for (PredictionResultat resultat : station.getResults()) {
+							if (resultat.isArima() || resultat.isSvm()) {
+								if (result.length() > 0) {
+									result.append(", ");
+								}
+								result.append(station.getId()).append("-").append(resultat.getLocalisationId())
+										.append("[");
+								if (resultat.isArima()) {
+									if (resultat.isSvm()) {
+										result.append("[ARIMA,SVM]");
+									} else {
+										result.append("[ARIMA]");
+									}
+								} else {
+									result.append("[SVM]");
+								}
+							}
+						}
+					}
+					if (result.length() > 0) {
+						System.out.println(prediction.getPredictionDate() + " : Prédiction : " + result.toString());
+					} else {
+						System.out.println(prediction.getPredictionDate() + " : Pas de prédiction de bouchon");
+					}
+				} catch (Exception e) {
+					System.err.println("Décodage de la réponse impossible");
 				}
 				conn.disconnect();
 			} catch (Exception e) {
@@ -154,11 +183,7 @@ public class GenerateJson {
 					System.err.println("Failed : HTTP error code : " + conn.getResponseCode());
 				}
 				BufferedReader br = new BufferedReader(new InputStreamReader((conn.getInputStream())));
-				String output;
-				System.out.println("Output from Server .... \n");
-				while ((output = br.readLine()) != null) {
-					System.out.println(output);
-				}
+				System.out.println("Output : " + br.readLine());
 				conn.disconnect();
 			} catch (Exception e) {
 				System.err.println("Erreur dans l'envoi des données : " + e);
