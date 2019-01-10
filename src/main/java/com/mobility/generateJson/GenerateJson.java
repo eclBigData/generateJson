@@ -21,7 +21,6 @@ import com.mobility.generateJson.object.DataPublication;
 import com.mobility.generateJson.object.HistoriquePublication;
 import com.mobility.generateJson.object.Mesure;
 import com.mobility.generateJson.object.Prediction;
-import com.mobility.generateJson.object.PredictionResultat;
 import com.mobility.generateJson.object.PredictionStation;
 import com.mobility.generateJson.object.Station;
 
@@ -115,23 +114,12 @@ public class GenerateJson {
 					Prediction prediction = new ObjectMapper().readValue(conn.getInputStream(), Prediction.class);
 
 					for (PredictionStation station : prediction.getStations()) {
-						for (PredictionResultat resultat : station.getResults()) {
-							if (resultat.isArima() || resultat.isSvm()) {
-								if (result.length() > 0) {
-									result.append(", ");
-								}
-								result.append(station.getId()).append("-").append(resultat.getLocalisationId())
-										.append("[");
-								if (resultat.isArima()) {
-									if (resultat.isSvm()) {
-										result.append("[ARIMA,SVM]");
-									} else {
-										result.append("[ARIMA]");
-									}
-								} else {
-									result.append("[SVM]");
-								}
+
+						if (station.getPrediction() == true) {
+							if (result.length() > 0) {
+								result.append(", ");
 							}
+							result.append(station.getId()).append("-").append(station.getLocalisationId());
 						}
 					}
 					if (result.length() > 0) {
@@ -147,6 +135,7 @@ public class GenerateJson {
 				System.err.println("Erreur dans l'envoi des données : " + e);
 			}
 		}
+
 	}
 
 	private void genereHistorique() throws SQLException, IOException {

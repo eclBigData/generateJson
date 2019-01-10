@@ -1,9 +1,16 @@
 package com.mobility.generateJson.object;
 
+import java.util.ArrayList;
+import java.util.List;
+
 public class PredictionResultat {
 	private Integer localisationId;
-	private boolean svm;
-	private boolean arima;
+	private Boolean result;
+	private List<PredictionDetail> detail;
+
+	public PredictionResultat() {
+		detail = new ArrayList<PredictionDetail>();
+	}
 
 	public Integer getLocalisationId() {
 		return localisationId;
@@ -13,20 +20,20 @@ public class PredictionResultat {
 		this.localisationId = localisationId;
 	}
 
-	public boolean isSvm() {
-		return svm;
+	public Boolean getResult() {
+		return result;
 	}
 
-	public void setSvm(boolean svm) {
-		this.svm = svm;
+	public void setResult(Boolean result) {
+		this.result = result;
 	}
 
-	public boolean isArima() {
-		return arima;
+	public List<PredictionDetail> getDetail() {
+		return detail;
 	}
 
-	public void setArima(boolean arima) {
-		this.arima = arima;
+	public void setDetail(List<PredictionDetail> detail) {
+		this.detail = detail;
 	}
 
 }

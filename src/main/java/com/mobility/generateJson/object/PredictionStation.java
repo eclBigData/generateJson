@@ -1,14 +1,14 @@
 package com.mobility.generateJson.object;
 
-import java.util.ArrayList;
 import java.util.List;
 
 public class PredictionStation {
 	private Integer id;
-	private List<PredictionResultat> results;
+	private Integer localisationId;
+	private Boolean prediction;
+	private List<PredictionDetail> details;
 
 	public PredictionStation() {
-		results = new ArrayList<PredictionResultat>();
 	}
 
 	public Integer getId() {
@@ -19,12 +19,28 @@ public class PredictionStation {
 		this.id = id;
 	}
 
-	public List<PredictionResultat> getResults() {
-		return results;
+	public Integer getLocalisationId() {
+		return localisationId;
 	}
 
-	public void setResults(List<PredictionResultat> results) {
-		this.results = results;
+	public void setLocalisationId(Integer localisationId) {
+		this.localisationId = localisationId;
+	}
+
+	public Boolean getPrediction() {
+		return prediction;
+	}
+
+	public void setPrediction(Boolean prediction) {
+		this.prediction = prediction;
+	}
+
+	public List<PredictionDetail> getDetails() {
+		return details;
+	}
+
+	public void setDetails(List<PredictionDetail> details) {
+		this.details = details;
 	}
 
 }
